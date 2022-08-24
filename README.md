@@ -1,2 +1,2 @@
-# python-project-template
-Template for python project with source directory
+# resid
+Analyses resources identifiers to extract valuable information
