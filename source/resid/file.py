@@ -1,3 +1,4 @@
+from . import urlmod
 from . import weburl
 from . import filepath
 from . import file_memory
@@ -12,7 +13,7 @@ def is_remote_file(_source):
     # Checks if source points to remote file(e.g webpage)
     if weburl.is_web_url(_source):
         # extract the path part of url
-        path_part = weburl.extract_path(_source)
+        path_part = urlmod.extract_path(_source)
         content_type = filepath.guess_content_type(path_part)
         # url pointing to file should have file extension
         return bool(content_type)

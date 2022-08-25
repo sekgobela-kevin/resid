@@ -1,8 +1,9 @@
 from . import filepath
-from . import weburl
 from . import file_memory
 
-from . import webpage
+from . import urlmod
+from . import weburl
+
 from . import exceptions
 
 
@@ -70,7 +71,7 @@ class WebUrl(DocumentURI):
 
     def extract_path(self, url):
         # Extracts path from source
-        return weburl.extract_path(self._source)
+        return urlmod.extract_path(self._source)
 
     def source_supported(self, source):
         # Checks if source is valid url
@@ -82,31 +83,48 @@ class WebUrl(DocumentURI):
         return html_content_type == self.get_content_type()
 
     def get_hostname(self):
-        return weburl.extract_hostname(self._source)
+        return urlmod.extract_hostname(self._source)
 
     def get_netloc(self):
-        return weburl.extract_netloc(self._source)
+        return urlmod.extract_netloc(self._source)
 
     def get_scheme(self):
-        return weburl.extract_scheme(self._source)
+        return urlmod.extract_scheme(self._source)
 
 
 class FilePath(DocumentURI):
     def extract_path(self, file_path):
-        return weburl.extract_path(file_path)
+        return file_path
 
     def source_supported(self, source):
         return filepath.is_file(source, True)
 
 
+class FilePathURL(FilePath):
+    def extract_path(self, file_path):
+        return urlmod.extract_path(file_path)
+
+    def source_supported(self, source):
+        if urlmod.is_url(source, {"file"}):
+            file_path = self.extract_path(source)
+            return super().source_supported(file_path)
+        else:
+            return False
+
+ 
 class FileMemory(DocumentURI):
     def extract_path(self, file_object):
         # Extracts path from 'name' attribute of file object.
         # Empty string will be returned if 'name' attributes not exists.
         try:
-            return str(file_object.name)
-        except:
+            name = file_object.name
+        except AttributeError:
             return ""
+        else:
+            if isinstance(name, (str, bytes, os.PathLike)):
+                return name
+            else:
+                return bytes(name)
     
     def source_supported(self, source):
         # Checks True if source is file like object
@@ -126,6 +144,6 @@ if __name__ == "__main__":
 
     _file_path = "https://www.example.com/search.filenames"
     with tempfile.TemporaryFile() as f:
-        file = FileMemory(f, "setup.cfg")
+        file = FilePathURL("file:///home/kevin-ubuntu/projects/resid/setup.py")
         print(file.get_content_type())
         

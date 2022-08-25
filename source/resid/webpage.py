@@ -1,11 +1,11 @@
 from . import filepath
 from . import weburl
-
+from . import urlmod
 
 def is_webpage(_source):
     # Checks if source is points to webpage
     if weburl.is_web_url(_source):
-        path = weburl.extract_path(_source)
+        path = urlmod.extract_path(_source)
         if path:
             if filepath.extract_extension(path):
                 # url resembling html is likely webpage
