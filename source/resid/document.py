@@ -1,73 +1,72 @@
+from . import pathmod
 from . import filepath
 from . import file_memory
 
 from . import urlmod
 from . import weburl
 
+from . import resource
 from . import exceptions
 
+# __all__ = [
+#     "Document",
+#     "WebUrl",
+#     "FilePath",
+#     "FilePathLike",
+#     "FilePathURL",
+#     "FileMemory"
+# ]
 
-class DocumentURI(): 
-    def __init__(self, source, path=None, content_type=None, encoding=None):
-        self._source = source
-        self._content_type = content_type
-        self._encording = encoding
-        self._setup_path(path)
+class Document(resource.Resource): 
+    _path_types = pathmod.PATH_TYPES
 
-    def _setup_path(self, path):
-        # Setup _path attribute from path
-        if path != None:
-            self._path = path
-        else:
-            if self.source_supported(self._source):
-                self._path = self.extract_path(self._source)
-            else:
-                err_msg = "Source '{}' is not supported for {}"
-                err_msg = err_msg.format(self.to_string(), type(self))
-                raise exceptions.UnsupportedSourceError(err_msg)
+    def __init__(self, source, content_type=None, encoding=None):
+        super().__init__(source, content_type, encoding)
 
     def source_supported(self, source):
         # Checks if source is supported
         # Any object is supported and can be used as source
         return isinstance(source, object)
 
-    def to_string(self):
+    def to_string(self, source):
         # Returns string version of source
-        return str(self._source)
-
-    def get_source(self):
-        return self._source
+        return str(source)
 
     def extract_path(self, source):
-        # Extarcts path from source
+        # Extracts path from source
         raise NotImplementedError
 
-    def get_path(self):
-        return self._path
+    @property
+    def path(self):
+        return self.extract_path(self._source)
 
-    def get_content_type(self):
-        if self._content_type != None:
-            return self._content_type
-        else:
-            return filepath.guess_content_type(self._path)
+    @property
+    def content_type(self):
+        if self.path:
+            return filepath.guess_content_type(self.path)
 
-    def get_encoding(self):
-        if self.self._encoding != None:
-            return self._encoding
-        else:
-            return filepath.guess_encoding(self._path)
+    @property
+    def encoding(self):
+        if super().encoding:
+            return super().encoding
+        elif self.content_type:
+            # Guessses encoding from existing content type
+            extension = filepath.guess_extension(self.content_type)
+            if extension:
+                return filepath.guess_encoding(" " + extension)
 
 
-class WebUrl(DocumentURI):
-    def get_content_type(self):
-        # Retrieves content type of url
-        if filepath.extract_extension(self._path):
-            return super().get_content_type()
+
+class WebUrl(Document):
+    @property
+    def content_type(self):
+        # Retrieves content type for contents of url
+        if super().content_type:
+            return super().content_type
         else:
             # html file is basic structure for webpage.
             # content type for webpage is same as that of html
             return filepath.guess_content_type(" .html")
-            
 
     def extract_path(self, url):
         # Extracts path from source
@@ -77,28 +76,115 @@ class WebUrl(DocumentURI):
         # Checks if source is valid url
         return weburl.is_web_url(source)
 
+    def available_locally(self, url):
+        # Checks if if url is hosted locally
+        return weburl.is_local(url)
+
+    def source_resembles(self, source):
+        # Checks if source resembles url
+        return weburl.resembles_web_url(source)
+
+    @property
     def is_webpage(self):
         # Checks if source(url) points to webpage
         html_content_type = filepath.guess_content_type(" .html")
-        return html_content_type == self.get_content_type()
+        return html_content_type == self.content_type
 
-    def get_hostname(self):
+    @property
+    def hostname(self):
         return urlmod.extract_hostname(self._source)
 
-    def get_netloc(self):
+    @property
+    def netloc(self):
         return urlmod.extract_netloc(self._source)
 
-    def get_scheme(self):
+    @property
+    def scheme(self):
         return urlmod.extract_scheme(self._source)
 
 
-class FilePath(DocumentURI):
-    def extract_path(self, file_path):
-        return file_path
+class Path(Document):
+    def __init__(self, source, content_type=None, encoding=None):
+        super().__init__(source, content_type, encoding)
+    
+    def extract_path(self, path):
+        if isinstance(path, os.PathLike):
+            return path.name
+        else:
+            return path
 
     def source_supported(self, source):
-        return filepath.is_file(source, True)
+        return pathmod.is_path(source, strict=True)
 
+    def available_locally(self, path):
+        return True
+
+    def source_resembles(self, source):
+        return pathmod.resembles_path(source)
+
+    @property
+    def size(self):
+        return os.stat(self.path).st_size
+
+    @property
+    def access_time(self):
+        return os.stat(self.path).st_atime
+
+    @property
+    def mod_time(self):
+        return os.stat(self.path).st_mtime
+
+    @property
+    def create_time(self):
+        return os.stat(self.path).st_ctime
+
+
+class DirPath(Path):
+    def source_supported(self, source):
+        return pathmod.is_dir_path(source, strict=True)
+
+    def source_resembles(self, source):
+        return pathmod.resembles_dir(source)
+
+    @property
+    def files(self):
+        return pathmod.get_folder_files(self._source, False)
+
+    def dirs(self):
+        return pathmod.get_folder_dirs(self._source, False)
+
+    @property
+    def dirs_recursive(self):
+        return pathmod.get_folder_dirs(self._source, True)
+    
+    @property
+    def files_recursive(self):
+        return pathmod.get_folder_files(self._source, True)
+
+class FilePath(Path):
+    def source_supported(self, source):
+        # File path is expected to be string or bytes.
+        # Pathlike, integers cant be used as path.
+        return pathmod.is_file_path(source, strict=True)
+
+    def source_resembles(self, source):
+        # Checks if source resembles path
+        return pathmod.resembles_file_path(source)
+
+class FilePathLike(FilePath):
+    def extract_path(self, file_like):
+        return file_like.name
+
+    def source_supported(self, file_like):
+        if isinstance(file_like, os.PathLike):
+            file_path = self.extract_path(file_like)
+            return super().source_supported(file_path)
+        else:
+            return False
+
+    def source_resembles(self, source):
+        return isinstance(source, os.PathLike)
+    
 
 class FilePathURL(FilePath):
     def extract_path(self, file_path):
@@ -111,39 +197,62 @@ class FilePathURL(FilePath):
         else:
             return False
 
+    def source_resembles(self, source):
+        return urlmod.is_url(source, {"file"})
  
-class FileMemory(DocumentURI):
-    def extract_path(self, file_object):
+class FileMemory(FilePath):
+    def set_path(self, path):
+        # Sets associated with source
+        if isinstance(path, self.path_types):
+            self.path = path
+        else:
+            err_msg = "Path should be str, bytes or os.PathLike not {}"
+            raise TypeError(err_msg.format(type(path)))
+
+
+    def extract_path(self, file):
         # Extracts path from 'name' attribute of file object.
         # Empty string will be returned if 'name' attributes not exists.
         try:
-            name = file_object.name
+            name = file._source.name
         except AttributeError:
-            return ""
+            pass
         else:
-            if isinstance(name, (str, bytes, os.PathLike)):
+            if isinstance(name, self.path_types):
                 return name
-            else:
-                return bytes(name)
     
     def source_supported(self, source):
-        # Checks True if source is file like object
+        # Checks source satisfies requirements for file object.
+        # 'name' attribute is expected to be valid path.
+        if file_memory.is_memory_file(source):
+            file_path = self.extract_path(source)
+            if file_path:
+                return super().source_supported(file_path)
+        return False
+
+    def source_resembles(self, source):
         return file_memory.is_memory_file(source)
 
     def to_string(self):
         # Returns string version of file object
-        if self._path:
-            return str(self._path)
+        if self.path:
+            return str(self.path)
         else:
-            return str(self._source)
+            return ""
+
+    def available_locally(self, file):
+        return True
 
 
 if __name__ == "__main__":
     import os
     import tempfile
+    import pathlib
 
     _file_path = "https://www.example.com/search.filenames"
     with tempfile.TemporaryFile() as f:
-        file = FilePathURL("file:///home/kevin-ubuntu/projects/resid/setup.py")
-        print(file.get_content_type())
-        
+        file = Path("setup\\")
+        print(file.path)
+        #file.set_path("filename.pdf")
+        print(file.content_type, file.status)
+            

@@ -35,7 +35,7 @@ def extract_scheme(url: str):
 
 def is_url(_source, schemes=None):
     # Checks if source is url for web resource
-    if isinstance(_source, str):
+    if isinstance(_source, (str, bytes)):
         scheme = extract_scheme(_source)
         netloc = extract_netloc(_source)
         path = extract_path(_source)
@@ -45,6 +45,10 @@ def is_url(_source, schemes=None):
             return bool((scheme)) and any((netloc, path))
     else:
         return False
+
+def resembles_url(_source, schemes=None):
+    return is_url(_source, schemes)
+
 
 def make_url_absolute(url:str, base_url:str):
     # Makes url absolute by adding missing parts from base_url

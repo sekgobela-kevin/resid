@@ -10,7 +10,10 @@ class SourceError(ResidError):
 class InvalidUrlError(SourceError):
     pass
 
-class InvalidFilePathError(SourceError):
+class FIlePathError(SourceError):
+    pass
+
+class InvalidFilePathError(FIlePathError):
     pass
 
 class UnsupportedSourceError(SourceError):

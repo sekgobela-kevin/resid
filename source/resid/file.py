@@ -23,7 +23,7 @@ def is_remote_file(_source):
 def is_local_file(_source):
     # Checks if source points to file on local machine
     if not is_remote_file(_source):
-        return filepath.is_file(_source, False)
+        return filepath.is_file_path(_source, False)
     else:
         return False
 

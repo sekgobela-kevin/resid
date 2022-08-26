@@ -1,0 +1,113 @@
+import os
+import glob
+import typing
+from urllib import parse
+
+
+# Defines allowed types for paths
+PATH_TYPES = (str, bytes, os.PathLike)
+_PATH = typing.Union[str, bytes, os.PathLike]
+
+# Max size of characters pathname(e.g filename) can have.
+# This does not mean the whole path.
+MAX_PATH_NAME_LENGTH = 100
+
+
+def walk(path: _PATH, recursive=False):
+    # Returns paths(dirs, files) in provided path.
+    # recursive if True match paths in sub-folder recursively.
+    for root, directories, filenames in os.walk(path):
+        for pathname in directories + filenames:
+            yield os.path.join(root, pathname)
+
+def filter_files(paths: typing.Iterable[_PATH]):
+    return filter(os.path.isfile, paths)
+
+def filter_dirs(paths: typing.Iterable[_PATH]):
+    return filter(os.path.isdir, paths)
+
+
+def get_folder_files(path: _PATH, recursive=False):
+    # Returns file paths in folder
+    return filter_files(walk(path, recursive))
+
+def get_folder_dirs(path: _PATH, recursive=False):
+    # Returns file paths in folder
+    return filter_files(walk(path, recursive)) 
+
+def glob_pattern_paths(glob_path, recursive=False):
+    return glob.glob(glob_path, recursive=recursive)
+
+
+def is_path(_source, exists_callback=None, strict=True):
+    if exists_callback == None:
+        exists_callback = os.path.exists
+    if isinstance(_source, PATH_TYPES):
+        if strict:
+            return exists_callback(_source)
+        else:
+            if exists_callback(_source):
+                return True
+            else:
+                try:
+                    with open(_source, 'w'):
+                        pass
+                except OSError:
+                    return False
+                else:
+                    os.unlink(_source)
+                    return True
+    else:
+        return False
+
+
+def is_file_path(_source, strict=True):
+    return is_path(_source, os.path.isfile, strict)
+
+def is_dir_path(_source, strict=True):
+    return is_path(_source, os.path.isdir, strict)
+
+def resembles_path(_source):
+    # Guesses if object resembles path
+    if _source and isinstance(_source, PATH_TYPES):
+        if isinstance(_source, os.PathLike):
+            return True
+        _source = str(_source)
+        drive, path = os.path.splitdrive(_source)
+        parsed = parse.urlparse(_source)
+
+        if parsed.netloc or parsed.params:
+            # Path cant have hostname(likely other urls)
+            return False
+        elif parsed.scheme and not drive:
+            # Path cant have scheme but miss drive part.
+            return False
+        else:
+            path_names = filter(None, path.split(os.sep))
+            for path_name in path_names:
+                if not is_path(path_name, os.path.exists, False):
+                    return False
+            return True
+
+
+def resembles_dir(_source):
+    # Guesses if object resembles directory path
+    if resembles_path(_source):
+        extension = os.path.splitext(_source)[0]
+        return not extension
+    else:
+        return False
+
+def resembles_file_path(_source):
+    # Guesses if object resembles file path
+    if resembles_path(_source):
+        _source = str(_source)
+        return not _source.endswith(os.sep)
+    else:
+        return False
+
+
+if __name__ == "__main__":
+    import pathlib
+    path = "/stackoverflow.com/\questions/3207219\\"
+    print(resembles_file_path(path))
