@@ -8,9 +8,12 @@ from . import weburl
 from . import resource
 from . import exceptions
 
+import os
+
+
 # __all__ = [
 #     "Document",
-#     "WebUrl",
+#     "WebURL",
 #     "FilePath",
 #     "FilePathLike",
 #     "FilePathURL",
@@ -56,17 +59,8 @@ class Document(resource.Resource):
                 return filepath.guess_encoding(" " + extension)
 
 
-
-class WebUrl(Document):
-    @property
-    def content_type(self):
-        # Retrieves content type for contents of url
-        if super().content_type:
-            return super().content_type
-        else:
-            # html file is basic structure for webpage.
-            # content type for webpage is same as that of html
-            return filepath.guess_content_type(" .html")
+class URL(Document):
+    _uri_type = "url"
 
     def extract_path(self, url):
         # Extracts path from source
@@ -74,21 +68,11 @@ class WebUrl(Document):
 
     def source_supported(self, source):
         # Checks if source is valid url
-        return weburl.is_web_url(source)
-
-    def available_locally(self, url):
-        # Checks if if url is hosted locally
-        return weburl.is_local(url)
+        return urlmod.is_url(source)
 
     def source_resembles(self, source):
         # Checks if source resembles url
-        return weburl.resembles_web_url(source)
-
-    @property
-    def is_webpage(self):
-        # Checks if source(url) points to webpage
-        html_content_type = filepath.guess_content_type(" .html")
-        return html_content_type == self.content_type
+        return urlmod.resembles_url(source)
 
     @property
     def hostname(self):
@@ -102,8 +86,55 @@ class WebUrl(Document):
     def scheme(self):
         return urlmod.extract_scheme(self._source)
 
+    @property
+    def query(self):
+        return urlmod.extract_query(self._source)
+
+    @property
+    def params(self):
+        return urlmod.extract_params(self._source)
+
+    @property
+    def fragment(self):
+        return urlmod.extract_fragment(self._source)
+
+    @property
+    def port(self):
+        return urlmod.extract_port(self._source)
+
+
+class WebURL(Document):
+    _uri_type = "web-url"
+
+    @property
+    def content_type(self):
+        # Retrieves content type for contents of url
+        if super().content_type:
+            return super().content_type
+        else:
+            # html file is basic structure for webpage.
+            # content type for webpage is same as that of html
+            return filepath.guess_content_type(" .html")
+
+    def source_supported(self, source):
+        # Checks if source is valid url for web
+        return weburl.is_web_url(source)
+
+    def source_resembles(self, source):
+        # Checks if source resembles url
+        return weburl.resembles_web_url(source)
+
+    @property
+    def is_webpage(self):
+        # Checks if source(url) points to webpage
+        html_content_type = filepath.guess_content_type(" .html")
+        return html_content_type == self.content_type
+ 
+
 
 class Path(Document):
+    _uri_type = "file-system-path"
+
     def __init__(self, source, content_type=None, encoding=None):
         super().__init__(source, content_type, encoding)
     
@@ -140,6 +171,8 @@ class Path(Document):
 
 
 class DirPath(Path):
+    _uri_type = "dir-path"
+
     def source_supported(self, source):
         return pathmod.is_dir_path(source, strict=True)
 
@@ -162,6 +195,7 @@ class DirPath(Path):
         return pathmod.get_folder_files(self._source, True)
 
 class FilePath(Path):
+    _uri_type = "file-path"
     def source_supported(self, source):
         # File path is expected to be string or bytes.
         # Pathlike, integers cant be used as path.
@@ -171,7 +205,8 @@ class FilePath(Path):
         # Checks if source resembles path
         return pathmod.resembles_file_path(source)
 
-class FilePathLike(FilePath):
+class PathLike(Path):
+    _uri_type = "path-like-object"
     def extract_path(self, file_like):
         return file_like.name
 
@@ -184,9 +219,19 @@ class FilePathLike(FilePath):
 
     def source_resembles(self, source):
         return isinstance(source, os.PathLike)
+
+class DirPathLike(PathLike):
+    _uri_type = "dir-path-like-object"
+    pass
+
+class FilePathLike(PathLike):
+    _uri_type = "file-path-like-object"
+    pass
+
     
 
 class FilePathURL(FilePath):
+    _uri_type = "local-file-url"
     def extract_path(self, file_path):
         return urlmod.extract_path(file_path)
 
@@ -201,6 +246,7 @@ class FilePathURL(FilePath):
         return urlmod.resembles_url(source, {"file"})
  
 class FileMemory(Document):
+    _uri_type = "file-like-object"
     def set_path(self, path):
         # Sets associated with source
         if isinstance(path, self.path_types):

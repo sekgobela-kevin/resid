@@ -95,7 +95,7 @@ def resembles_url(_source, schemes=None):
     # 2. Or source should have atleast hostname.
     if isinstance(_source, (str, bytes)):
         if schemes != None:
-            # Url needs to have atleast one of provided schemes
+            # URL needs to have atleast one of provided schemes
             scheme_satisfied = resembles_schemes(_source, schemes)
         else:
             # Dont care if url has scheme if schemes not provided
@@ -150,11 +150,11 @@ def make_url_absolute(url:str, base_url:str):
         # parse.urljoin() is intelligent than os.path.join()
         return urljoin(base_url, url)
     
-    # Url is complete and should have everything
+    # URL is complete and should have everything
     elif is_url(url):
         return url
     else:
-        raise exceptions.InvalidUrlError(url + " is not a valid url")
+        raise exceptions.InvalidURLError(url + " is not a valid url")
 
 
 if __name__ == "__main__":

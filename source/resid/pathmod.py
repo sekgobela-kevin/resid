@@ -3,6 +3,7 @@ import glob
 import typing
 from urllib import parse
 
+import tempfile
 
 # Defines allowed types for paths
 PATH_TYPES = (str, bytes, os.PathLike)
@@ -50,12 +51,11 @@ def is_path(_source, exists_callback=None, strict=True):
                 return True
             else:
                 try:
-                    with open(_source, 'w'):
+                    with tempfile.NamedTemporaryFile('w', prefix=_source):
                         pass
                 except OSError:
                     return False
                 else:
-                    os.unlink(_source)
                     return True
     else:
         return False
@@ -93,15 +93,17 @@ def resembles_path(_source):
 def resembles_dir(_source):
     # Guesses if object resembles directory path
     if resembles_path(_source):
-        extension = os.path.splitext(_source)[0]
-        return not extension
+        # dir should not have to end with path sep or extension.
+        extension = os.path.splitext(_source)[1]
+        print(_source)
+        return _source.endswith(os.sep) or not extension
     else:
         return False
 
 def resembles_file_path(_source):
     # Guesses if object resembles file path
     if resembles_path(_source):
-        _source = str(_source)
+        #extension = os.path.splitext(_source)[1]
         return not _source.endswith(os.sep)
     else:
         return False

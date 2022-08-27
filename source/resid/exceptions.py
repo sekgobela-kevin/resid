@@ -7,7 +7,7 @@ class ResidError(Exception):
 class SourceError(ResidError):
     pass
 
-class InvalidUrlError(SourceError):
+class InvalidURLError(SourceError):
     pass
 
 class FIlePathError(SourceError):
