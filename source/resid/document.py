@@ -198,9 +198,9 @@ class FilePathURL(FilePath):
             return False
 
     def source_resembles(self, source):
-        return urlmod.is_url(source, {"file"})
+        return urlmod.resembles_url(source, {"file"})
  
-class FileMemory(FilePath):
+class FileMemory(Document):
     def set_path(self, path):
         # Sets associated with source
         if isinstance(path, self.path_types):
@@ -224,14 +224,8 @@ class FileMemory(FilePath):
     def source_supported(self, source):
         # Checks source satisfies requirements for file object.
         # 'name' attribute is expected to be valid path.
-        if file_memory.is_memory_file(source):
-            file_path = self.extract_path(source)
-            if file_path:
-                return super().source_supported(file_path)
-        return False
-
-    def source_resembles(self, source):
         return file_memory.is_memory_file(source)
+
 
     def to_string(self):
         # Returns string version of file object

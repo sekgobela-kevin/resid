@@ -34,7 +34,7 @@ class Resource():
     def source_resembles(self, source):
         # Returns True if source is likely to be supported.
         # That does not mean source is supported.
-        return False
+        return self.source_supported(source)
 
     @property
     def supported(self):

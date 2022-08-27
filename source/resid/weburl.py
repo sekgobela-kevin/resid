@@ -11,13 +11,10 @@ LOCAL_HOST_NAMES = {"localhost", "127.0.0.1"}
 
 def is_web_url(_source):
     # Checks if source is url for web resource
-    if isinstance(_source, str):
-        return urlmod.is_url(_source, WEB_URL_SCHEMES)
-    else:
-        return False
+    return urlmod.is_url(_source, WEB_URL_SCHEMES)
 
 def resembles_web_url(_source):
-    return is_web_url(_source)
+    return urlmod.resembles_url(_source, WEB_URL_SCHEMES)
 
 def _get_local_adress():
     # Gets ip adress of local machine
