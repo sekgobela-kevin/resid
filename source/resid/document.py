@@ -31,13 +31,19 @@ class Document(resource.Resource):
         # Any object is supported and can be used as source
         return isinstance(source, object)
 
-    def to_string(self, source):
-        # Returns string version of source
-        return str(source)
+    def to_string(self):
+        # Returns string version of source.
+        # source or path will be used if they are strings.
+        if self._source and isinstance(self._source, str):
+            return self._source
+        elif self.path and isinstance(self.path, str):
+            return self.path
+        else:
+            return super().to_string()
 
     def extract_path(self, source):
         # Extracts path from source
-        raise NotImplementedError
+        return ""
 
     @property
     def path(self):
@@ -103,7 +109,7 @@ class URL(Document):
         return urlmod.extract_port(self._source)
 
 
-class WebURL(Document):
+class WebURL(URL):
     _uri_type = "web-url"
 
     @property
@@ -237,7 +243,7 @@ class FilePathLike(PathLike):
 
     
 
-class FilePathURL(FilePath):
+class FilePathURL(FilePath, URL):
     _uri_type = "local-file-url"
     def extract_path(self, file_path):
         return urlmod.extract_path(file_path)
@@ -256,7 +262,7 @@ class FileMemory(Document):
     _uri_type = "file-like-object"
     def set_path(self, path):
         # Sets associated with source
-        if isinstance(path, self.path_types):
+        if isinstance(path, pathmod.PATH_TYPES):
             self.path = path
         else:
             err_msg = "Path should be str, bytes or os.PathLike not {}"
@@ -267,25 +273,17 @@ class FileMemory(Document):
         # Extracts path from 'name' attribute of file object.
         # Empty string will be returned if 'name' attributes not exists.
         try:
-            name = file._source.name
+            name = file.name
         except AttributeError:
             pass
         else:
-            if isinstance(name, self.path_types):
+            if isinstance(name, pathmod.PATH_TYPES):
                 return name
     
     def source_supported(self, source):
         # Checks source satisfies requirements for file object.
         # 'name' attribute is expected to be valid path.
         return file_memory.is_memory_file(source)
-
-
-    def to_string(self):
-        # Returns string version of file object
-        if self.path:
-            return str(self.path)
-        else:
-            return ""
 
     def available_locally(self, file):
         return True

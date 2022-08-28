@@ -15,12 +15,12 @@ class Resource():
         self._encoding = encoding
 
 
-    def _validate_source(self, source):
+    def _validate_source(self):
         # Raises exception when source is not supported
-        if not self.source_supported(source):
+        if not self.source_supported(self._source):
             err_msg = "Source '{}' is not supported for {}"
             err_msg = err_msg.format(
-                self.to_string(source)[:20], 
+                self.uri[:20], 
                 type(self)
             )
             raise exceptions.UnsupportedSourceError(err_msg)
@@ -31,9 +31,9 @@ class Resource():
         # No source is supported for now.
         return False
 
-    def to_string(self, source):
+    def to_string(self):
         # Returns string version of source
-        return str(source)
+        return ""
 
     def to_dict(self):
         return {
@@ -92,7 +92,7 @@ class Resource():
 
     @property
     def uri(self):
-        return self.to_string(self._source)
+        return self.to_string()
 
     @property
     def uri_type(self):

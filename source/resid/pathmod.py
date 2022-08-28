@@ -36,7 +36,7 @@ def get_folder_files(path: _PATH, recursive=False):
 
 def get_folder_dirs(path: _PATH, recursive=False):
     # Returns file paths in folder
-    return filter_files(walk(path, recursive)) 
+    return filter_dirs(walk(path, recursive)) 
 
 def glob_pattern_paths(glob_path, recursive=False):
     return glob.glob(glob_path, recursive=recursive)
@@ -107,7 +107,7 @@ def resembles_file_path(_source):
     # Guesses if object resembles file path
     if resembles_path(_source):
         #extension = os.path.splitext(_source)[1]
-        path = os.path.normpath(path)
+        path = os.path.normcase(_source)
         return not path.endswith(os.sep)
     else:
         return False

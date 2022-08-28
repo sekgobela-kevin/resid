@@ -32,15 +32,19 @@ def find_resources(source, strict=False, **kwargs):
     # Find resources instances closely related to source.
     # master contains resource objects created from source.
     master_obj = master.Master(source, **kwargs)
-    if strict:
-        # Gets supported resources from master.
-        # Supported resources clearly matches the source.
-        return master_obj.supported_resources
-    else:
+    # Gets supported resources from master.
+    # Supported resources clearly matches the source.
+    # Supported resources take precidence over resembled ones.
+    supported_resources = master_obj.supported_resources
+    if supported_resources:
+        return supported_resources
+    elif not strict:
         # Gets resources resembling source.
         # Resemblimg resources are not guaranteed to be supported.
         # e.g url may still be invalid or file path not existing.
         return master_obj.resembles_resources
+    else:
+        return []
     
 def find_resource(source, strict=False, **kwargs):
     # Find resource instance supporting or resembling source.
@@ -48,16 +52,18 @@ def find_resource(source, strict=False, **kwargs):
     # find_resources() but performance may be impacted.
     # Supported resource has priority over resmbling ones.
     master_obj = master.Master(source, **kwargs)
-    if strict:
-        return master_obj.supported_resource
-    else:
+    supported_resource = master_obj.supported_resource
+    if supported_resource:
+        return supported_resource
+    elif not strict:
         return master_obj.resembles_resource
+
 
 def _find_resource_types(source, strict=False, **kwargs):
     # Returns resources classes supported or rembling source.
     # This is done by first finding resource objects and then getting
     # their classes.
-    _resources = find_resources(source, strict=False, **kwargs)
+    _resources = find_resources(source, strict, **kwargs)
     return [_resource.__class__ for _resource in _resources]
 
 def _resource_access_attr(_resource, attribute, default=None):
@@ -71,7 +77,7 @@ def _resource_access_attr(_resource, attribute, default=None):
             return value
     return default
 
-def _find_resource_access_attr(source, attribute, strict=True, 
+def _find_resource_access_attr(source, attribute, strict=False, 
     default=None, **kwargs):
     # Finds resource object and access attribute from it.
     # None is returned when resource object cannot be found.
