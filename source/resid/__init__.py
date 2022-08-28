@@ -1,13 +1,4 @@
-from . import document
-from . import resource
-
-
-
-
-
-
-
-
+from .highlevel import *
 
 
 ___version__ = "0.0.1"

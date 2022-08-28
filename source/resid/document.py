@@ -179,20 +179,27 @@ class DirPath(Path):
     def source_resembles(self, source):
         return pathmod.resembles_dir(source)
 
+    def get_files(self, recursive=False):
+        return pathmod.get_folder_files(self.path, recursive)
+
+    def get_dirs(self, recursive=False):
+        return pathmod.get_folder_dirs(self.path, recursive)
+
     @property
     def files(self):
-        return pathmod.get_folder_files(self._source, False)
+        return self.get_files(False)
 
+    @property
     def dirs(self):
-        return pathmod.get_folder_dirs(self._source, False)
+        return self.get_dirs(False)
 
     @property
     def dirs_recursive(self):
-        return pathmod.get_folder_dirs(self._source, True)
+        return self.get_dirs(True)
     
     @property
     def files_recursive(self):
-        return pathmod.get_folder_files(self._source, True)
+        return self.get_files(True)
 
 class FilePath(Path):
     _uri_type = "file-path"

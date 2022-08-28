@@ -20,6 +20,8 @@ def walk(path: _PATH, recursive=False):
     for root, directories, filenames in os.walk(path):
         for pathname in directories + filenames:
             yield os.path.join(root, pathname)
+        if not recursive:
+            break
 
 def filter_files(paths: typing.Iterable[_PATH]):
     return filter(os.path.isfile, paths)
@@ -83,6 +85,7 @@ def resembles_path(_source):
             # Path cant have scheme but miss drive part.
             return False
         else:
+            path = os.path.normpath(path)
             path_names = filter(None, path.split(os.sep))
             for path_name in path_names:
                 if not is_path(path_name, os.path.exists, False):
@@ -94,9 +97,9 @@ def resembles_dir(_source):
     # Guesses if object resembles directory path
     if resembles_path(_source):
         # dir should not have to end with path sep or extension.
-        extension = os.path.splitext(_source)[1]
-        print(_source)
-        return _source.endswith(os.sep) or not extension
+        path = os.path.normcase(_source)
+        extension = os.path.splitext(path)[1]
+        return path.endswith(os.sep) or not extension
     else:
         return False
 
@@ -104,7 +107,8 @@ def resembles_file_path(_source):
     # Guesses if object resembles file path
     if resembles_path(_source):
         #extension = os.path.splitext(_source)[1]
-        return not _source.endswith(os.sep)
+        path = os.path.normpath(path)
+        return not path.endswith(os.sep)
     else:
         return False
 

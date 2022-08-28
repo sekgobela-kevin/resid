@@ -3,23 +3,62 @@
 # It include guessing content type, encoding and others.
 
 from . import master
+from . import document
 
+__all__ = [
+    "find_resource",
+    "find_resources",
+    "guess_content_type",
+    "guess_encoding",
+    "locally_hosted",
+    "remotely_hosted",
+    "is_supported",
+    "is_resembled",
+    "to_string",
+    "guess_type",
+    "guess_name",
 
-def find_resource(source, strict=True, **kwargs):
-    # Find resource object closely related to source.
+    "is_path",
+    "is_file_path",
+    "is_dir_path",
+    "is_path_like",
+    "is_file_path_url",
+    "is_url",
+    "is_web_url",
+    "is_file_like"
+]
+
+def find_resources(source, strict=False, **kwargs):
+    # Find resources instances closely related to source.
     # master contains resource objects created from source.
-    # Returns None of source cannot satisfy any of resource object.
     master_obj = master.Master(source, **kwargs)
-    # Gets supported resource from master.
-    # Supported resource clearly matches the source.
-    supported_resource = master_obj.supported_resource
-    if supported_resource:
-        return supported_resource
-    elif not strict:
-        # Gets resource resembling source.
-        # Resemblimg sources are not guaranteed to be supported.
+    if strict:
+        # Gets supported resources from master.
+        # Supported resources clearly matches the source.
+        return master_obj.supported_resources
+    else:
+        # Gets resources resembling source.
+        # Resemblimg resources are not guaranteed to be supported.
         # e.g url may still be invalid or file path not existing.
+        return master_obj.resembles_resources
+    
+def find_resource(source, strict=False, **kwargs):
+    # Find resource instance supporting or resembling source.
+    # Returns None if source cannot satisfy any of resource object.
+    # find_resources() but performance may be impacted.
+    # Supported resource has priority over resmbling ones.
+    master_obj = master.Master(source, **kwargs)
+    if strict:
+        return master_obj.supported_resource
+    else:
         return master_obj.resembles_resource
+
+def _find_resource_types(source, strict=False, **kwargs):
+    # Returns resources classes supported or rembling source.
+    # This is done by first finding resource objects and then getting
+    # their classes.
+    _resources = find_resources(source, strict=False, **kwargs)
+    return [_resource.__class__ for _resource in _resources]
 
 def _resource_access_attr(_resource, attribute, default=None):
     # Accesses attribute of resource object.
@@ -40,46 +79,95 @@ def _find_resource_access_attr(source, attribute, strict=True,
     resource_object = find_resource(source, strict, **kwargs)
     return _resource_access_attr(resource_object, attribute, default)
 
-def guess_content_type(source) -> str:
+def guess_content_type(source):
     # Guesses content type of contents of source
-    return _find_resource_access_attr(source, "content_type", False)
+    return _find_resource_access_attr(source, "content_type")
 
 def guess_encoding(source):
     # Guesses encording of contents of source
-    return _find_resource_access_attr(source, "encoding", False)
+    return _find_resource_access_attr(source, "encoding")
 
 def locally_hosted(source):
     # Returns True if contents of source are available locally
-    return _find_resource_access_attr(source, "locally", False)
+    return _find_resource_access_attr(source, "locally")
 
 def remotely_hosted(source):
     # Returns True if contents of source are available remotely.
-    return _find_resource_access_attr(source, "remotely", False)
+    return _find_resource_access_attr(source, "remotely")
 
 def is_supported(source):
     # Returns if source is supported(e.g is valid url)
-    return _find_resource_access_attr(source, "supported", False, False)
+    return _find_resource_access_attr(source, "supported", default=False)
 
 def is_resembled(source):
     # Returns True if source resembles classes for supported sources.
     # Source may be valid file path but not existing.
-     return _find_resource_access_attr(source, "resembles", False, False)
+     return _find_resource_access_attr(source, "resembles", default=False)
 
 def to_string(source):
     # returns string version of source(None if not supported)
-    return _find_resource_access_attr(source, "uri", False)
+    return _find_resource_access_attr(source, "uri")
 
 def guess_type(source):
     # Returns string about type of source provided source.
     # It may be files path, file like object, etc.
-    return _find_resource_access_attr(source, "uri_type", False)
+    return _find_resource_access_attr(source, "uri_type")
 
 def guess_name(source):
     # Guesses name of source(string version of source)
     return to_string(source)
 
 
+
+def _source_matches_resource_type(source, resource_type, strict=False):
+    # Checks if ssource upports or resembles resource type(class)
+    # resource_types = _find_resource_types(source, strict)
+    # return resource_type in resource_types
+    _resource = resource_type(source)
+    if strict:
+        return _resource.supported
+    else:
+        return _resource.resembles
+
+def is_path(source, strict=False):
+    # Checks if source is dir or file path
+    return _source_matches_resource_type(source, document.Path, strict)
+
+def is_file_path(source, strict=False):
+    # Checks if source is file path
+    return _source_matches_resource_type(source, document.FilePath, strict)
+
+def is_dir_path(source, strict=False):
+    # Checks if source is file path
+    return _source_matches_resource_type(source, document.DirPath, strict)
+
+def is_path_like(source, strict=False):
+    # Checks if source is a path like object
+    return _source_matches_resource_type(source, document.PathLike, strict)
+
+def is_file_path_url(source, strict=False):
+    # Checks if source is url for local file path(file://)
+    return _source_matches_resource_type(source, document.FilePathURL, strict)
+
+def is_url(source, strict=False):
+    # Checks if source is url(file path not included)
+    return _source_matches_resource_type(source, document.URL, strict)
+
+def is_web_url(source, strict=False):
+    # Checks if source is url for web documents
+    return _source_matches_resource_type(source, document.WebURL, strict)
+
+def is_file_like(source, strict=False):
+    # Checks if source is file like object
+    return _source_matches_resource_type(source, document.FileMemory, strict)
+
+def is_memory_file(source, strict=False):
+    # Checks if source is file like object
+    return is_file_like(source, strict)
+
+
+
 if __name__ == "__main__":
-    resource = find_resource("file.py", False)
-    print(guess_type("git://www.google.com/search?q=mimetypes+"))
+    resource = find_resource("file.py")
+    print(guess_type("git://www.example.com/search?q=mimetypes+"))
     
