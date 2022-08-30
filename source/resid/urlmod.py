@@ -12,9 +12,14 @@ def urlparse_dict(url):
 def url_unparse(url):
     return parse.urlparse(url)._asdict()
 
-def urljoin(parse_url, url):
-    return parse.urljoin(parse_url, url)
+def urljoin(base_url, url):
+    return parse.urljoin(base_url, url)
 
+def quote(url, *args, **kwargs):
+    return parse.quote(url, *args, **kwargs)
+
+def unquote(url, *args, **kwargs):
+    return parse.unquote(url, *args, **kwargs)
 
 def extract_path(url: str):
     # Extracts path part of url

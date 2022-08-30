@@ -42,6 +42,13 @@ def glob_pattern_paths(glob_path, recursive=False):
     return glob.glob(glob_path, recursive=recursive)
 
 
+def extract_drive(path):
+    return os.path.splitdrive(path)[0]
+
+def remove_drive(path):
+    return os.path.splitdrive(path)[1]
+
+
 def is_path(_source, exists_callback=None, strict=True):
     if exists_callback == None:
         exists_callback = os.path.exists

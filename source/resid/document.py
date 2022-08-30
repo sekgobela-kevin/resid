@@ -243,20 +243,26 @@ class FilePathLike(PathLike):
 
     
 
-class FilePathURL(FilePath, URL):
+class FilePathURL(URL, FilePath):
     _uri_type = "local-file-url"
     def extract_path(self, file_path):
-        return urlmod.extract_path(file_path)
+        path_part = urlmod.extract_path(file_path)
+        # Decodes extracted path from url
+        path_decoded = urlmod.unquote(path_part)
+        # Removes leading(/) if path has drive part
+        if pathmod.extract_drive(path_decoded[1:]):
+            return path_decoded[1:]
+        return path_decoded
+
 
     def source_supported(self, source):
-        if urlmod.is_url(source, {"file"}):
-            file_path = self.extract_path(source)
-            return super().source_supported(file_path)
-        else:
-            return False
+        return urlmod.is_url(source, {"file"})
 
     def source_resembles(self, source):
         return urlmod.resembles_url(source, {"file"})
+
+    def available_locally(self, file):
+        return True
  
 class FileMemory(Document):
     _uri_type = "file-like-object"
