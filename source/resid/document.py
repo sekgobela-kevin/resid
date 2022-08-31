@@ -80,6 +80,9 @@ class URL(Document):
         # Checks if source resembles url
         return urlmod.resembles_url(source)
 
+    def available_locally(self, url):
+        return urlmod.is_locally_hosted(url)
+
     @property
     def hostname(self):
         return urlmod.extract_hostname(self._source)

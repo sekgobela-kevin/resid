@@ -1,8 +1,12 @@
 from . import exceptions
 
+import socket
 from urllib import parse
 
 
+LOCAL_HOST_NAMES = {"localhost", "127.0.0.1"}
+
+# url parsing functions
 def urlparse(url):
     return parse.urlparse(url)
 
@@ -21,6 +25,8 @@ def quote(url, *args, **kwargs):
 def unquote(url, *args, **kwargs):
     return parse.unquote(url, *args, **kwargs)
 
+
+# Functions for extracting parts of url
 def extract_path(url: str):
     # Extracts path part of url
     return parse.urlparse(url).path
@@ -54,8 +60,16 @@ def extract_port(url: str):
 def extract_fragment(url: str):
     return parse.urlparse(url).fragment
 
+
+# # Functions for validationg url
+# def is_file_path_scheme(scheme):
+#     # Checks if chememe is that of file path.
+#     # credit: https://stackoverflow.com/questions/29026051
+#     return os.path.exists(scheme + ":\\")
+
+
 def is_url(_source, schemes=None):
-    # Checks if source is url for web resource
+    # Checks if source is url for web resource.
     if isinstance(_source, (str, bytes)):
         scheme = extract_scheme(_source)
         netloc = extract_netloc(_source)
@@ -65,18 +79,19 @@ def is_url(_source, schemes=None):
             return scheme in schemes and any(any_items)
         else:
             return bool((scheme)) and any(any_items)
-    else:
-        return False
+    return False
 
 def resembles_scheme(_url, scheme):
     # Checks if url resembles containing scheme
     # It does not mean that scheme is real scheme of url.
-    if "//" in _url[:20] and not _url.startswith("//"):
-        if scheme != None:
-            return _url.startswith(scheme)
-        else:
+    url_scheme = extract_scheme(scheme)
+    if url_scheme:
+        if scheme == None:
             return True
+        else:
+            return scheme == url_scheme
     return False
+
 
 def resembles_hostname(_url, hostname):
     # Checks if url resembles containing hostname
@@ -94,7 +109,8 @@ def resembles_schemes(_url, schemes):
     return False
 
 def resembles_url(_source, schemes=None):
-    # Checks if source resembles url
+    # Checks if source resembles url.
+    # FIle path is not considered url here.
     # 1. source should 2 of any of url parts excluding path and hostname.
     # 2. Or source should have scheme(or resemble) and path.
     # 2. Or source should have atleast hostname.
@@ -113,8 +129,8 @@ def resembles_url(_source, schemes=None):
             # scheme and path satisfies url
             return True
         else:
-            # source satifying scheme and atleast another part of url
-            # can be considered resmbling url.
+            # source satifying scheme and atleast 2 other parts of url
+            # can be considered resembling url.
             any_items = [
                 extract_query(_source),
                 extract_params(_source),
@@ -126,6 +142,7 @@ def resembles_url(_source, schemes=None):
     return False
 
 
+# Functions for transforming url
 def make_url_absolute(url:str, base_url:str):
     # Makes url absolute by adding missing parts from base_url
     # inspired by: requests-html requests_html.BaseParse._make_absolute()
@@ -160,6 +177,53 @@ def make_url_absolute(url:str, base_url:str):
         return url
     else:
         raise exceptions.InvalidURLError(url + " is not a valid url")
+
+
+
+# Functions relating to IP addresses
+def _get_local_adress():
+    # Gets ip adress of local machine
+    hostname = socket.gethostname()
+    return socket.gethostbyname(hostname)
+
+def _get_local_ip_adresses():
+    # Gets ip adresses of local machine.
+    # Functions is not reliable and shouldnt be depended.
+    # source: https://stackoverflow.com/questions/270745/
+    addreses = set()
+    for info in socket.getaddrinfo(socket.gethostname(), None):
+        addreses.add(info[4][0])
+    return addreses
+
+def is_local_ip_address(ip_address):
+    # Checks if url is built on local ip address.
+    # Not reliable function.
+    return ip_address in _get_local_ip_adresses()
+
+
+# Functions for checking if url is hosted locally or remotely
+def is_local_host(hostname):
+    # Checks hostname identifies this machine e.g localhost
+    # Not reliable function.
+    return hostname in LOCAL_HOST_NAMES
+
+def is_remote_host(hostname):
+    # Checks if host is remote host e.g example.com
+    return not is_local_host(hostname)
+
+def is_locally_hosted(_url):
+    # Checks if url is served by local machine.
+    # Functions is not reliable and shouldnt be depended.
+    hostname = extract_hostname(_url)
+    if hostname:
+        return is_local_host(hostname) or is_local_ip_address(hostname)
+    else:
+        return True
+
+def is_remotely_hosted(_url):
+    # Checks if url is served by remote machine.
+    # Functions is not reliable and shouldnt be depended.
+    return not is_locally_hosted(_url)
 
 
 if __name__ == "__main__":
