@@ -72,7 +72,7 @@ True
 ```python
 >>> resid.guess_content_type("sample.txt")
 'text/plain'
->>> resid.guess_content_type("https://example.com/)
+>>> resid.guess_content_type("https://example.com/")
 'text/html'
 >>> resid.guess_content_type("https://example.com/files/sample.pdf")
 'application/pdf'
