@@ -130,10 +130,13 @@ def _source_matches_resource_type(source, resource_type, strict=False):
     # resource_types = _find_resource_types(source, strict)
     # return resource_type in resource_types
     _resource = resource_type(source)
-    if strict:
-        return _resource.supported
-    else:
+    supported = _resource.supported
+    if supported:
+        return supported
+    elif not strict:
         return _resource.resembles
+    else:
+        return False
 
 def is_path(source, strict=False):
     # Checks if source is dir or file path

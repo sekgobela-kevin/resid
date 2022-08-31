@@ -84,13 +84,12 @@ def is_url(_source, schemes=None):
 def resembles_scheme(_url, scheme):
     # Checks if url resembles containing scheme
     # It does not mean that scheme is real scheme of url.
-    url_scheme = extract_scheme(scheme)
-    if url_scheme:
-        if scheme == None:
-            return True
-        else:
-            return scheme == url_scheme
-    return False
+    url_scheme = extract_scheme(_url)
+    if scheme != None:
+        return scheme == url_scheme
+    else:
+        return bool(url_scheme)
+        
 
 
 def resembles_hostname(_url, hostname):
@@ -110,7 +109,6 @@ def resembles_schemes(_url, schemes):
 
 def resembles_url(_source, schemes=None):
     # Checks if source resembles url.
-    # FIle path is not considered url here.
     # 1. source should 2 of any of url parts excluding path and hostname.
     # 2. Or source should have scheme(or resemble) and path.
     # 2. Or source should have atleast hostname.
