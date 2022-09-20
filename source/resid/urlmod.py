@@ -141,15 +141,23 @@ def resembles_url(_source, schemes=None):
 
 
 # Functions for transforming url
-def make_url_absolute(url:str, base_url:str):
+def make_url_absolute(base_url:str, url:str):
     # Makes url absolute by adding missing parts from base_url
     # inspired by: requests-html requests_html.BaseParse._make_absolute()
 
     # Parse url componets into dictionary
     parsed = urlparse(url)._asdict()
 
+    # Setup slashes to be used
+    if isinstance(url, bytes):
+        single_slash = b"/"
+        double_slash = b"//"
+    else:
+        single_slash = "/"
+        double_slash = "//"
+
     # url almost complete but missing scheme
-    if url.startswith("//"):
+    if url.startswith(single_slash):
         parsed['scheme'] = urlparse(base_url).scheme
 
         # Recreates url with new scheme
@@ -157,7 +165,7 @@ def make_url_absolute(url:str, base_url:str):
         return url_unparse(parsed)
 
     # Link is absolute; its just missing scheme and netloc
-    elif url.startswith("/"):
+    elif url.startswith(double_slash):
         parsed['scheme'] = urlparse(base_url).scheme
         parsed['netloc'] = urlparse(base_url).netloc
 
@@ -225,7 +233,7 @@ def is_remotely_hosted(_url):
 
 
 if __name__ == "__main__":
-    base_url = "parsy.readthedocs.io/en/latest?name#10/name"
+    base_url = "parsy.readthedocs.io/en/page"
     relative_url = "tutorial.html"
     print(resembles_url(base_url, None))
-    print(make_url_absolute(base_url, base_url))
+    print(make_url_absolute(base_url, relative_url))
