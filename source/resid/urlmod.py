@@ -14,7 +14,7 @@ def urlparse_dict(url):
     return urlparse(url)._asdict()
 
 def url_unparse(url):
-    return parse.urlparse(url)._asdict()
+    return parse.urlunparse(url)
 
 def urljoin(base_url, url):
     return parse.urljoin(base_url, url)
@@ -24,6 +24,9 @@ def quote(url, *args, **kwargs):
 
 def unquote(url, *args, **kwargs):
     return parse.unquote(url, *args, **kwargs)
+
+def urlparse_to_url(parse_results):
+    return parse_results.get_url()
 
 
 # Functions for extracting parts of url
@@ -141,7 +144,7 @@ def resembles_url(_source, schemes=None):
 
 
 # Functions for transforming url
-def make_url_absolute(base_url:str, url:str):
+def make_url_absolute(base_url, url):
     # Makes url absolute by adding missing parts from base_url
     # inspired by: requests-html requests_html.BaseParse._make_absolute()
 
@@ -149,27 +152,29 @@ def make_url_absolute(base_url:str, url:str):
     parsed = urlparse(url)._asdict()
 
     # Setup slashes to be used
-    if isinstance(url, bytes):
-        single_slash = b"/"
-        double_slash = b"//"
-    else:
+    if isinstance(url, str):
         single_slash = "/"
         double_slash = "//"
+    else:
+        single_slash = b"/"
+        double_slash = b"//"
 
     # url almost complete but missing scheme
-    if url.startswith(single_slash):
+    if url.startswith(double_slash):
         parsed['scheme'] = urlparse(base_url).scheme
+        
 
-        # Recreates url with new scheme
+        # Recreates url with new scheme and netloc
         parsed = [value for value in parsed.values()]
         return url_unparse(parsed)
 
     # Link is absolute; its just missing scheme and netloc
-    elif url.startswith(double_slash):
+    elif url.startswith(single_slash):
+        print(parsed, url, single_slash)
         parsed['scheme'] = urlparse(base_url).scheme
         parsed['netloc'] = urlparse(base_url).netloc
 
-        # Recreates url with new scheme and netloc
+        # Recreates url with new scheme
         parsed = [value for value in parsed.values()]
         return url_unparse(parsed)
 
@@ -233,7 +238,7 @@ def is_remotely_hosted(_url):
 
 
 if __name__ == "__main__":
-    base_url = "parsy.readthedocs.io/en/page"
-    relative_url = "tutorial.html"
+    base_url ="https://example.com/tutorials"
+    relative_url = "/tutorial.html"
     print(resembles_url(base_url, None))
     print(make_url_absolute(base_url, relative_url))
