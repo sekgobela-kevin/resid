@@ -3,21 +3,20 @@
 ### Description
 **Resid** is a python library for analysing resource identifiers 
 for extracting valuable information. This can include guessing content 
-type, encoding, wheather contents are available locally or if it 
+type, encoding, checking if contents are available locally or if it 
 resembles file path, url, etc.
 
 In this library, _source_ is defined as similar to _uri_ but source
 can be anything including file object. 'source' is defined as anything
 that can be used to access/locate contents. That can include _url_, 
-_file path_, _file object_ and others depending on wheather
+_file path_, _file object_ and others depending on whether
 they can be used to access data or get information about it.
 
 Any object can be used as source but not all of them will be supported.
-This library helps in extracting information about source such as wheather
+This library helps in extracting information about source such as whether
 source is supported or guessing its content type.
 
-> Only urls, file-paths, dir-paths, file-like-objects, path-like-objects are
-currenly supported. 
+> Only urls, file-paths, dir-paths, file-like-objects, path-like-objects are currently supported. 
 
 ### Install
 Enter this on your command-line application:  
@@ -163,18 +162,3 @@ True
 'https'
 >>> url_res.hostname
 'example.com'
->>> list(dir_res.files)
-['.venv\\pyvenv.cfg']
->>> list(dir_res.dirs)
-['.venv\\Include', '.venv\\Lib', '.venv\\Scripts']
->>> list(dir_res.files_recursive)
-...
->>> list(dir_res.dirs_recursive)
-...
-```
-
-### About
-_Resid_ was developed based on [navaly](https://github.com/Sekgobela-Kevin/naval) 
-library to be used with navaly. It relect a portion of navaly which is 
-split to its own project for reuse. Resid can still be used with other 
-python projects as seen in the examples above.
