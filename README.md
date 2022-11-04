@@ -16,25 +16,19 @@ Any object can be used as source but not all of them will be supported.
 This library helps in extracting information about source such as whether
 source is supported or guessing its content type.
 
-> Only urls, file-paths, dir-paths, file-like-objects, path-like-objects are currently supported. 
-
 ### Install
 Enter this on your command-line application:  
 ```bash 
 pip install resid
 ```
-
-### Usage
-#### Importing resid
-```python
-import resid
-```
 > resid -> Resource Identifier
 
-#### Check support of source
-View _supported source_ as a valid file path and resembled as file path
-that may not be valid but looks like file path.
+### Usage
+Supported source is source that is guaranteed to be supported while 
+resembled source is not guaranteed.
 ```python
+>>> import resid
+>>>
 >>> resid.is_supported("https://stackoverflow.com/")
 True
 >>> resid.is_supported("not_exists.txt")
@@ -46,9 +40,9 @@ True
 >>> resid.is_resembled(object)
 False
 ```
-> Most functions will return `None` if source is not supported.
 
-#### Check if source falls in category
+Source can be checked to see if its url, file path, etc using few 
+functions which may return None if source is not supported.
 ```python
 >>> resid.is_url("https://example.com/")
 True
@@ -66,8 +60,8 @@ True
 True
 ```
 
-
-#### Guess content type
+Content type of source can be guessed from source itself especially 
+file paths and urls for webpages.
 ```python
 >>> resid.guess_content_type("sample.txt")
 'text/plain'
@@ -79,7 +73,8 @@ True
 'text/plain'
 ```
 
-#### Check if contents are hosted locally or remotely
+It may be important to know if source contents are hosted locally 
+or remotely if intending to fetch contents.
 ```python
 >>> resid.locally_hosted("sample.txt")
 True
@@ -97,23 +92,7 @@ True
 False
 ```
 
-#### Guess type of source
-```python
->>> resid.guess_type("sample.txt")
-'file-path'
->>> resid.guess_type("contents/")
-'dir-path'
->>> resid.guess_type("https://example.com/")
-'web-url'
->>> resid.guess_type(io.BytesIO())
-'file-like-object'
->>> resid.guess_type(pathlib.Path("sample.txt"))
-'file-path-like-object'
->>> resid.guess_type("file:///home/sample.txt")
-'local-file-url'
-```
-
-#### Convert source to string
+String version of source can be created from path part source if exists.
 ```python
 >>> resid.to_string(open("setup.py"))
 'setup.py'
@@ -124,41 +103,15 @@ False
 ```
 
 
-### Alternate Usage
-#### File path example
+More extensions, content types and encodings can be added through 
+`mimetypes`
+module.
 ```python
->>> file_res = resid.find_resource("setup.py")
->>> file_res.supported
-True
->>> file_res.content_type
-'text/plain'
->>> file_res.path
-'setup.py'
->>> file_res.size
-41
->>> file_res.mod_time
-1661489762.1989822
+>>> import mimetypes
+>>>
+>>> mimetypes.common_types[".jpg"] = "image/jpg"
+>>> mimetypes.encodings_map[".gz"] = "gzip" 
 ```
 
-#### Directory example
-```python
->>> dir_res = resid.find_resource("https://example.com/")
->>> list(dir_res.files)
-['.venv\\pyvenv.cfg']
->>> list(dir_res.dirs)
-['.venv\\Include', '.venv\\Lib', '.venv\\Scripts']
->>> list(dir_res.files_recursive)
-...
->>> list(dir_res.dirs_recursive)
-...
-```
-
-#### URL example
-```python
->>> url_res = resid.find_resource("https://example.com/")
->>> url_res.content_type
-'text/html'
->>> url_res.scheme
-'https'
->>> url_res.hostname
-'example.com'
+### License
+[MIT license](https://github.com/sekgobela-kevin/resid/blob/main/LICENSE)
